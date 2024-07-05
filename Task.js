@@ -2,15 +2,17 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Checkbox, IconButton } from 'react-native-paper';
 
+
 const Task = ({ task, toggleStatus, deleteTask }) => {
   
 
+
   return (
     <View style={styles.taskContainer}>
-              <Text style={ (task.status==false) ? styles.taskTitle : styles.taskTitleDone}>{task.title}</Text>
+              <Text style={ (task.completed==false) ? styles.taskTitle : styles.taskTitleDone}>{task.title}</Text>
      <View  style={{flexDirection:'row',alignItems:'center'}}>
      <Checkbox
-        status={task.status ? 'checked' : 'unchecked'}
+        status={task.completed ? 'checked' : 'unchecked'}
         onPress={() => toggleStatus(task.id)}
       />
       <IconButton

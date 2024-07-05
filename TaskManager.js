@@ -1,34 +1,74 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, TextInput, Button } from 'react-native';
+import React from 'react';
+import { useEffect } from 'react';
+import { useState } from 'react';
+import { View, StyleSheet, FlatList, TextInput, Button, } from 'react-native';
 import Task from './Task';
+import { collection, getDocs, query, getFirestore, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import db from './Firebase';
 
 const TaskManager = () => {
-  const [tasks, setTasks] = useState([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [tasks, setTasks] = useState([]);
 
-  const addTask = () => {
+  useEffect(() => {
+    const dbCollection = collection(db, 'Tasks');
+    const dbQuery = query(dbCollection);
+
+    getDocs(dbQuery)
+      .then((querySnapshot) => {
+        const fetchedTasks = [];
+        querySnapshot.forEach((doc) => {
+
+          const data = doc.data();
+          fetchedTasks.push({ id: doc.id, title: data.title, completed: data.completed });
+        });
+        setTasks(fetchedTasks);
+      })
+      .catch((error) => {
+
+      });
+  }, []);
+
+
+  const addTask = async () => {
     if (newTaskTitle.trim() === '') return;
 
-    console.log(newTaskTitle)
-
     const newTask = {
-      id: Date.now(),
       title: newTaskTitle,
-      status: false,
+      completed: false,
     };
 
-    setTasks([...tasks, newTask]);
-    setNewTaskTitle('');
+    try {
+      const docRef = await addDoc(collection(db, 'Tasks'), newTask);
+      setTasks([...tasks, { ...newTask, id: docRef.id }]);
+      setNewTaskTitle('');
+    } catch (error) {
+      console.error("Error adding task: ", error);
+    }
   };
 
-  const toggleStatus = (taskId) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, status: !task.status } : task
-    ));
+  const toggleStatus = async (taskId) => {
+    const task = tasks.find(task => task.id === taskId);
+    if (!task) return;
+
+    try {
+      const taskRef = doc(db, 'Tasks', taskId);
+      await updateDoc(taskRef, { completed: !task.completed });
+      setTasks(tasks.map(task => 
+        task.id === taskId ? { ...task, completed: !task.completed } : task
+      ));
+    } catch (error) {
+      console.error("Error updating task: ", error);
+    }
   };
 
-  const deleteTask = (taskId) => {
-    setTasks(tasks.filter(task => task.id !== taskId));
+  const deleteTask = async (taskId) => {
+    try {
+      await deleteDoc(doc(db, 'Tasks', taskId));
+      setTasks(tasks.filter(task => task.id !== taskId));
+    } catch (error) {
+      console.error("Error deleting task: ", error);
+    }
   };
 
   return (

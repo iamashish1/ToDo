@@ -1,4 +1,3 @@
-// App.js
 import React from 'react';
 import { Provider as PaperProvider } from 'react-native-paper';
 import TaskManager from './TaskManager';
